@@ -1541,7 +1541,7 @@ if(totop) totop.addEventListener("click", function(){
   if(!form) return;
   /* Set this to a form endpoint (Formspree, Web3Forms, your own) and the form POSTs.
      Leave it empty and it falls back to opening a pre-filled email, which works everywhere. */
-  var ENDPOINT = "";
+  var ENDPOINT = "https://api.web3forms.com/submit";
   var status = $("#cf-status"), submit = $("#cf-submit");
 
   function bad(id, on){ var f = $("#" + id).closest(".fld"); if(f) f.classList.toggle("bad", on); }
@@ -1579,12 +1579,18 @@ if(totop) totop.addEventListener("click", function(){
       fetch(ENDPOINT, {
         method: "POST",
         headers: {"Accept":"application/json","Content-Type":"application/json"},
-        body: JSON.stringify({name:name, email:email, company:company, topic:topic, message:msg})
+        body: JSON.stringify({access_key:"00076d8c-aef5-43b4-9e5a-4364543d29a2", name:name, email:email, company:company, topic:topic, message:msg})
       }).then(function(r){
-        if(!r.ok) throw new Error("bad status " + r.status);
-        show("ok", "Thanks — that has reached us. We reply to everything, usually within one working day.");
-        form.reset(); submit.disabled = false;
-      }).catch(function(){
+        return r.json().then(function(data){
+          if(data.success){
+            show("ok", "Thanks — that has reached us. We reply to everything, usually within one working day.");
+            form.reset(); submit.disabled = false;
+          } else {
+            submit.disabled = false;
+            show("no", "That did not send (" + (data.message||"unknown error") + "). Email us directly at info@codeiqholdings.co.uk and we will pick it up.");
+          }
+        });
+      }).catch(function(err){
         submit.disabled = false;
         show("no", "That did not send. Email us directly at info@codeiqholdings.co.uk and we will pick it up.");
       });
